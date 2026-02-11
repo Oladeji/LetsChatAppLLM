@@ -1,0 +1,6 @@
+@LetsChatAppBackEnd_HostAddress = http://localhost:5010
+
+GET {{LetsChatAppBackEnd_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

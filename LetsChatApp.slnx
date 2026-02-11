@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="FunctionCallerLLM/FunctionCallerLLM.csproj" Id="00e835d7-7cec-470f-8b23-ed3d23c9673d" />
+  <Project Path="LetsChatApp/LetsChatApp.csproj" />
+  <Project Path="LetsChatAppBackEnd/LetsChatAppBackEnd.csproj" />
+  <Project Path="TextComplection/TextComplection.csproj" Id="fa7e0c90-7e9a-41d3-8f38-d2a60b798b9c" />
+  <Project Path="VectorSearch/VectorSearch.csproj" Id="8af7244f-f087-404d-a627-88add37a2d5b" />
+</Solution>
