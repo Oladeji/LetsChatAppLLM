@@ -1,0 +1,93 @@
+version: '3.8'
+
+services:
+  # Ollama LLM Service
+  ollama:
+    image: ollama/ollama:latest
+    container_name: letschat-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    networks:
+      - letschat-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+
+  # Backend Service
+  backend:
+    build:
+      context: .
+      dockerfile: LetsChatAppBackEnd/Dockerfile
+    container_name: letschat-backend
+    ports:
+      - "5000:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - OLLAMA_ENDPOINT=http://ollama:11434
+      - QDRANT_ENDPOINT=http://qdrant:6333
+      - ALLOWED_ORIGINS=http://localhost:3000,http://frontend:80
+    volumes:
+      - backend-uploads:/app/AllDbDocumentsUploads
+    networks:
+      - letschat-network
+    depends_on:
+      qdrant:
+        condition: service_healthy
+      ollama:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Frontend Service
+  frontend:
+    build:
+      context: ./LetsChatAppFrontEnd
+      dockerfile: Dockerfile
+    container_name: letschat-frontend
+    ports:
+      - "3000:80"
+    environment:
+      - VITE_API_URL=http://localhost:5000
+    networks:
+      - letschat-network
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  # Ollama Model Loader (runs once to pull models)
+  ollama-setup:
+    image: ollama/ollama:latest
+    container_name: letschat-ollama-setup
+    networks:
+      - letschat-network
+    depends_on:
+      ollama:
+        condition: service_healthy
+    volumes:
+      - ollama-data:/root/.ollama
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo "Pulling llama3.2 model..."
+        ollama pull llama3.2 --ollama-host http://ollama:11434
+        echo "Pulling all-minilm embedding model..."
+        ollama pull all-minilm --ollama-host http://ollama:11434
+        echo "Models pulled successfully!"
+    restart: "no"
+
+networks:
+  letschat-network:
+    driver: bridge
+
+volumes:
+  ollama-data:
+    driver: local
+  backend-uploads:
+    driver: local
+  backend-db:
+    driver: local
