@@ -1,5 +1,5 @@
-using LetsChatApp.Models;
 using LetsChatAppBackEnd;
+using LetsChatAppBackEnd.Configuration;
 using LetsChatAppBackEnd.Services;
 using LetsChatAppBackEnd.Services.Ingestion;
 using Microsoft.Extensions.AI;
@@ -7,34 +7,23 @@ using Microsoft.Extensions.VectorData;
 using Microsoft.SemanticKernel.Connectors.Qdrant;
 using OllamaSharp;
 using Qdrant.Client;
-using Qdrant.Client.Grpc;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Bind configuration
+var appSettings = new AppSettings();
+builder.Configuration.Bind(appSettings);
+builder.Services.AddSingleton(appSettings);
 builder.Services.AddOpenApi();
 builder.Services.AddSignalR();
 
 // Configure CORS for React frontend
-
-string[] allowedOrigins = ["http://localhost:5173", "http://localhost:3000"];
-var lllmEndPoint = "http://localhost:11434";
-var llmModelName = "llama3.2";
-var embeddingModelname = "all-minilm";//// distance function for nomic is 768
-var actualDocumentsPath = "AllDbDocumentsUploads";
-
-var qdrantEndpoint = "http://localhost:6333"; 
-var qdrantEmbeddingModel = "nomic-embed-text";//ollama pull nomic-embed-text
-//var chuncksCollectName = "Chunks";
-//var documentCollectName = "documents";
-
-string chunkCollectionName = "chunks";
-string documentCollectionName = "docs";
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowReactApp", policy =>
+    options.AddPolicy("AllowedOriginsPolicy", policy =>
     {
-        policy.WithOrigins(allowedOrigins)
+        policy.WithOrigins(appSettings.Cors.AllowedOrigins)
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
@@ -42,22 +31,12 @@ builder.Services.AddCors(options =>
 });
 
 // Configure AI services
-IChatClient chatClient = new OllamaApiClient(new Uri(lllmEndPoint), llmModelName);
-//IEmbeddingGenerator<string, Embedding<float>> embeddingGenerator = new OllamaApiClient(new Uri(lllmEndPoint), embeddingModelname);
+IChatClient chatClient = new OllamaApiClient(new Uri(appSettings.Ollama.Endpoint), appSettings.Ollama.ChatModelName);
+IEmbeddingGenerator<string, Embedding<float>> qdEmbeddingGenerator = new OllamaApiClient(new Uri(appSettings.Ollama.Endpoint), appSettings.Ollama.EmbeddingModelName);
 
-IEmbeddingGenerator<string, Embedding<float>> qdEmbeddingGenerator = new OllamaApiClient(new Uri(lllmEndPoint), qdrantEmbeddingModel);
-
-
-
-// Configure vector store for sql lite
-//var vectorStorePath = Path.Combine(AppContext.BaseDirectory, sqlLitePath);
-//var vectorStoreConnectionString = $"Data Source={vectorStorePath}";
-
-//builder.Services.AddSqliteCollection<string, IngestedChunk>("data-letschatapp-chunks", vectorStoreConnectionString);
-//builder.Services.AddSqliteCollection<string, IngestedDocument>("data-letschatapp-documents", vectorStoreConnectionString);
 
 // Configure vector store for qdrant
-var qdrantClient = new QdrantClient("localhost",6334);
+var qdrantClient = new QdrantClient(appSettings.Qdrant.Host, appSettings.Qdrant.Port);
 builder.Services.AddSingleton(qdrantClient);
 builder.Services.AddSingleton<IEmbeddingGenerator<string, Embedding<float>>>(qdEmbeddingGenerator);
 VectorStore vectorStore = new QdrantVectorStore(qdrantClient, false, new QdrantVectorStoreOptions
@@ -74,7 +53,7 @@ builder.Services.AddChatClient(chatClient).UseFunctionInvocation().UseLogging();
 // (Used by DataIngestor and SemanticSearch)
 
 // Option B: Register collections directly with embedding generator
-// (Used by DataIngestor2 and SemanticSearch2)
+// (Used by DataIngestor2, SemanticSearch2, and API endpoints)
 builder.Services.AddSingleton<VectorStoreCollection<Guid, IngestedChunk>>(sp =>
 {
     var client = sp.GetRequiredService<QdrantClient>();
@@ -82,7 +61,7 @@ builder.Services.AddSingleton<VectorStoreCollection<Guid, IngestedChunk>>(sp =>
 
     return new QdrantCollection<Guid, IngestedChunk>(
         client, 
-        "chunks", 
+        appSettings.Qdrant.Collections.Chunks, 
         ownsClient: false,
         new QdrantCollectionOptions
         {
@@ -97,7 +76,7 @@ builder.Services.AddSingleton<VectorStoreCollection<Guid, IngestedDocument>>(sp 
 
     return new QdrantCollection<Guid, IngestedDocument>(
         client, 
-        "docs", 
+        appSettings.Qdrant.Collections.Documents, 
         ownsClient: false,
         new QdrantCollectionOptions
         {
@@ -109,15 +88,12 @@ builder.Services.AddSingleton<VectorStoreCollection<Guid, IngestedDocument>>(sp 
 
 
 builder.Services.AddScoped<DataIngestor>();
-builder.Services.AddScoped<DataIngestor2>();
+//builder.Services.AddScoped<DataIngestor2>();
 builder.Services.AddSingleton<SemanticSearch>();
-builder.Services.AddSingleton<SemanticSearch2>();
+//builder.Services.AddSingleton<SemanticSearch2>();
 
-//builder.Services.AddQdrantVectorStore(vectorStorePath);
-//builder.Services.AddQdrantClient("drantdb");
 
-// Configure upload directory
-var uploadDirectory = Path.Combine(AppContext.BaseDirectory, actualDocumentsPath);
+var uploadDirectory = Path.Combine(AppContext.BaseDirectory, appSettings.Documents.UploadPath);
 if (!Directory.Exists(uploadDirectory))
 {
     Directory.CreateDirectory(uploadDirectory);
@@ -133,9 +109,9 @@ if (app.Environment.IsDevelopment())
 }
 
 //app.UseHttpsRedirection();
-app.UseCors("AllowReactApp");
+app.UseCors("AllowedOriginsPolicy");
 app.MapLetsChatAppEndPoints();
 // Initial ingestion from uploads directory
-await DataIngestor.IngestDataAsync(app.Services, app.Services.GetRequiredService<PDFUploadSource>());
+//await DataIngestor.IngestDataAsync(app.Services, app.Services.GetRequiredService<PDFUploadSource>());
 
 app.Run();

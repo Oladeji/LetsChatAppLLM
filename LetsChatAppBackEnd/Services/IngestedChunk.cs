@@ -4,7 +4,7 @@ namespace LetsChatAppBackEnd.Services;
 
 public class IngestedChunk
 {
-    public const int VectorDimensions = 384; // 384 for all-minilm embedding model
+    public const int VectorDimensions = 768; // 768 for nomic-embed-text embedding model
     public const string VectorDistanceFunction = "CosineSimilarity";
     public const string CollectionName = "data-IngestedChunk";
     [VectorStoreKey]

@@ -14,32 +14,33 @@ namespace LetsChatAppBackEnd
         {
 
             // Map SignalR Hub
-            route.MapHub<ChatHub>("/chatHub").RequireCors("AllowReactApp");
+            route.MapHub<ChatHub>("/chatHub").RequireCors("AllowedOriginsPolicy");
             // API Endpoints
             route.MapPost("/api/search", searchRepo)
             .WithName("SearchDocuments")
-            .WithOpenApi();
+            .RequireCors("AllowedOriginsPolicy");
 
-            route.MapGet("/api/documents",GetDocs)
+            route.MapGet("/api/documents", GetDocs)
             .WithName("GetDocuments")
-            .WithOpenApi();
+            .RequireCors("AllowedOriginsPolicy");
 
-            route.MapDelete("/api/documents/{documentId}",DeleteDocs)
+            route.MapDelete("/api/documents/{documentId}", DeleteDocs)
             .WithName("DeleteDocument")
-            .WithOpenApi();
+            .RequireCors("AllowedOriginsPolicy");
+            
 
             route.MapPost("/api/documents/upload",UploadDocs)
             .WithName("UploadDocument")
             .DisableAntiforgery()
-            .WithOpenApi();
+            .RequireCors("AllowedOriginsPolicy");
 
             route.MapPost("/api/documents/reingest", ReIngestDocs)
             .WithName("ReingestDocuments")
-            .WithOpenApi();
+            .RequireCors("AllowedOriginsPolicy");
 
             route.MapGet("/api/documents/view/{documentId}", ViewRepo)
             .WithName("ViewDocument")
-            .WithOpenApi();
+            .RequireCors("AllowedOriginsPolicy");
 
         }
 

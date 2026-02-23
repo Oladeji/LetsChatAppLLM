@@ -103,8 +103,10 @@ const Chat = () => {
   }
 
   const handleViewDocument = (filename: string, pageNumber: number) => {
-    // Open PDF in new tab
-    const url = `http://localhost:5010/api/documents/view/${encodeURIComponent(filename)}#page=${pageNumber}`
+    // Open PDF in new tab using the backend API endpoint
+    // Backend is running on port 5010 (from launchSettings.json http profile)
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5010'
+    const url = `${apiUrl}/api/documents/view/${encodeURIComponent(filename)}#page=${pageNumber}`
     window.open(url, '_blank')
   }
 
