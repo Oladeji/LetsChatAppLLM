@@ -31,7 +31,7 @@ public class PDFUploadSource(string uploadDirectory) : IIngestionSource
             var existingDocumentVersion = existingDocumentsById.TryGetValue(sourceFileId, out var existingDocument) ? existingDocument.DocumentVersion : null;
             if (existingDocumentVersion != sourceFileVersion)
             {
-                results.Add(new() { Key = Guid.CreateVersion7().ToString(), SourceId = SourceId, DocumentId = sourceFileId, DocumentVersion = sourceFileVersion });
+                results.Add(new() { Key = Guid.CreateVersion7(), SourceId = SourceId, DocumentId = sourceFileId, DocumentVersion = sourceFileVersion });
             }
         }
 
@@ -58,7 +58,7 @@ public class PDFUploadSource(string uploadDirectory) : IIngestionSource
 
         return Task.FromResult(paragraphs.Select(p => new IngestedChunk
         {
-            Key = Guid.CreateVersion7().ToString(),
+            Key = Guid.CreateVersion7(),
             DocumentId = document.DocumentId,
             PageNumber = p.PageNumber,
             Text = p.Text,

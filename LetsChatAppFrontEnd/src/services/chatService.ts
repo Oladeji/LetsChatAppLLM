@@ -88,6 +88,8 @@ export class ChatService {
     }))
 
     try {
+      console.log('📤 Invoking SendMessage on server with conversationId:', conversationId)
+      console.log('📤 Message content:', message)
       await this.connection.invoke('SendMessage', message, history, conversationId)
       console.log('✅ Message sent to server')
     } catch (err) {

@@ -8,19 +8,21 @@ namespace LetsChatAppBackEnd.Hubs;
 public class ChatHub(IChatClient chatClient, SemanticSearch search) : Hub
 {
     private const string SystemPrompt = @"
-        You are an assistant who answers questions about information you retrieve.
-        Do not answer questions about anything else.
-        Use only simple markdown to format your responses.
+        You are an assistant who answers questions about information in documents.
 
-        Use the search tool to find relevant information. When you do this, end your
-        reply with citations in the special XML format:
+        IMPORTANT: You MUST use the SearchAsync tool to find information before answering any question.
+        Never answer from your own knowledge - always search first using the tool.
 
-        <citation filename='string' page_number='number'>exact quote here</citation>
+        Steps:
+        1. Call SearchAsync with the user's question or relevant keywords
+        2. Wait for the search results
+        3. Answer based ONLY on the search results
+        4. Add citations in this XML format: <citation filename='string' page_number='number'>exact quote</citation>
 
-        Always include the citation in your response if there are results.
+        If no search results are found, say 'I could not find information about that in the documents.'
 
-        The quote must be max 5 words, taken word-for-word from the search result, and is the basis for why the citation is relevant.
-        Don't refer to the presence of citations; just emit these tags right at the end, with no surrounding text.
+        Use simple markdown to format your responses.
+        The quote in citations must be max 5 words, taken word-for-word from the search result.
         ";
 
     public async Task SendMessage(string message, List<ChatMessageDto> conversationHistory, string? conversationId)
@@ -52,6 +54,12 @@ public class ChatHub(IChatClient chatClient, SemanticSearch search) : Hub
 
             await foreach (var update in chatClient.GetStreamingResponseAsync(messages, chatOptions))
             {
+                // Log if function call is happening
+                if (update.Contents?.Any(c => c is FunctionCallContent) == true)
+                {
+                    Console.WriteLine("🔧 LLM is calling a function!");
+                }
+
                 await Clients.Caller.SendAsync("ReceiveMessageChunk", update.Text ?? string.Empty);
 
                 if (update.ConversationId != null)
@@ -75,9 +83,15 @@ public class ChatHub(IChatClient chatClient, SemanticSearch search) : Hub
     [Description("Searches for information using a phrase or keyword")]
     private async Task<IEnumerable<string>> SearchAsync(
         [Description("The phrase to search for.")] string searchPhrase,
-        [Description("If possible, specify the filename to search that file only. If not provided or empty, the search includes all files.")] string? filenameFilter = null)
+        [Description("If possible, specify the filename to search that file only. If not provided or empty, the search includes all files.")] string filenameFilter = "")
     {
-        var results = await search.SearchAsync(searchPhrase, filenameFilter, maxResults: 5);
+        Console.WriteLine($"🔍 SearchAsync called with phrase: '{searchPhrase}', filter: '{filenameFilter}'");
+
+        var filenameFilterValue = string.IsNullOrWhiteSpace(filenameFilter) ? null : filenameFilter;
+        var results = await search.SearchAsync(searchPhrase, filenameFilterValue, maxResults: 5);
+
+        Console.WriteLine($"📊 Search returned {results.Count} results");
+
         return results.Select(result =>
             $"<result filename=\"{result.DocumentId}\" page_number=\"{result.PageNumber}\">{result.Text}</result>");
     }

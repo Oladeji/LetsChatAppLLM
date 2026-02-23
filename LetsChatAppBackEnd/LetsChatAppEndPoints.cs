@@ -49,19 +49,20 @@ namespace LetsChatAppBackEnd
             return Results.Ok(new { Message = "Re-ingestion completed successfully" });
         }
 
-        public static async Task<IResult> GetDocs(VectorStoreCollection<string, IngestedDocument> documentsCollection)
+        public static async Task<IResult> GetDocs(VectorStoreCollection<Guid, IngestedDocument> documentsCollection)
         {
             var documents = await documentsCollection.GetAsync(_ => true, top: int.MaxValue).ToListAsync();
             return Results.Ok(documents.Select(d => new DocumentInfo(d.DocumentId, d.SourceId, d.DocumentVersion)));
         }
 
         public static async Task<IResult> DeleteDocs(
-                string documentId,
-                VectorStoreCollection<string, IngestedDocument> documentsCollection,
-                VectorStoreCollection<string, IngestedChunk> chunksCollection)
+                Guid documentId,
+                VectorStoreCollection<Guid, IngestedDocument> documentsCollection,
+                VectorStoreCollection<Guid, IngestedChunk> chunksCollection)
         { 
           
-            var documents = await documentsCollection.GetAsync(d => d.DocumentId == documentId, top: int.MaxValue).ToListAsync();
+          //  var documents = await documentsCollection.GetAsync(d => d.DocumentId == documentId, top: int.MaxValue).ToListAsync();
+            var documents = await documentsCollection.GetAsync(d => d.DocumentId.Equals(documentId), top: int.MaxValue).ToListAsync();
             if (documents.Count == 0)
             {
                 return Results.NotFound(new { Message = "Document not found" });
@@ -69,7 +70,8 @@ namespace LetsChatAppBackEnd
 
             foreach (var doc in documents)
             {
-                var chunks = await chunksCollection.GetAsync(c => c.DocumentId == documentId, top: int.MaxValue).ToListAsync();
+                var chunks = await chunksCollection.GetAsync(c => c.DocumentId.Equals( documentId), top: int.MaxValue).ToListAsync();
+                //var chunks = await chunksCollection.GetAsync(c => c.DocumentId == documentId, top: int.MaxValue).ToListAsync();
                 if (chunks.Count > 0)
                 {
                     await chunksCollection.DeleteAsync(chunks.Select(c => c.Key));
