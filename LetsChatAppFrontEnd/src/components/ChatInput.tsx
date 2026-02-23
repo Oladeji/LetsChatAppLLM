@@ -25,8 +25,26 @@ const ChatInput = ({ onSend, disabled = false }: ChatInputProps) => {
   }
 
   return (
-    <Paper elevation={3} sx={{ p: 2 }}>
-      <Box sx={{ display: 'flex', gap: 1 }}>
+    <Paper 
+      elevation={0} 
+      sx={{ 
+        p: 2,
+        border: '1px solid',
+        borderColor: 'divider',
+        borderRadius: 3,
+        background: 'linear-gradient(to bottom, #ffffff, #f8fafc)',
+        transition: 'all 0.3s ease',
+        '&:hover': {
+          borderColor: 'primary.main',
+          boxShadow: '0 0 0 3px rgba(99, 102, 241, 0.1)',
+        },
+        '&:focus-within': {
+          borderColor: 'primary.main',
+          boxShadow: '0 0 0 3px rgba(99, 102, 241, 0.2)',
+        },
+      }}
+    >
+      <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-end' }}>
         <TextField
           fullWidth
           multiline
@@ -34,17 +52,41 @@ const ChatInput = ({ onSend, disabled = false }: ChatInputProps) => {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyPress={handleKeyPress}
-          placeholder="Type your message..."
+          placeholder="Ask me anything about your documents..."
           disabled={disabled}
-          variant="outlined"
+          variant="standard"
+          InputProps={{
+            disableUnderline: true,
+            sx: {
+              fontSize: '15px',
+              '& textarea': {
+                '&::placeholder': {
+                  color: 'text.secondary',
+                  opacity: 0.7,
+                },
+              },
+            },
+          }}
         />
         <IconButton
-          color="primary"
           onClick={handleSend}
           disabled={disabled || !input.trim()}
-          sx={{ alignSelf: 'flex-end' }}
+          sx={{
+            bgcolor: input.trim() && !disabled ? 'primary.main' : 'grey.200',
+            color: input.trim() && !disabled ? 'white' : 'grey.400',
+            width: 42,
+            height: 42,
+            transition: 'all 0.3s ease',
+            '&:hover': {
+              bgcolor: input.trim() && !disabled ? 'primary.dark' : 'grey.300',
+              transform: 'scale(1.05)',
+            },
+            '&:disabled': {
+              bgcolor: 'grey.200',
+            },
+          }}
         >
-          <SendIcon />
+          <SendIcon fontSize="small" />
         </IconButton>
       </Box>
     </Paper>

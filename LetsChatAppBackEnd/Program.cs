@@ -54,35 +54,35 @@ builder.Services.AddChatClient(chatClient).UseFunctionInvocation().UseLogging();
 
 // Option B: Register collections directly with embedding generator
 // (Used by DataIngestor2, SemanticSearch2, and API endpoints)
-builder.Services.AddSingleton<VectorStoreCollection<Guid, IngestedChunk>>(sp =>
-{
-    var client = sp.GetRequiredService<QdrantClient>();
-    var embGen = sp.GetRequiredService<IEmbeddingGenerator<string, Embedding<float>>>();
+//builder.Services.AddSingleton<VectorStoreCollection<Guid, IngestedChunk>>(sp =>
+//{
+//    var client = sp.GetRequiredService<QdrantClient>();
+//    var embGen = sp.GetRequiredService<IEmbeddingGenerator<string, Embedding<float>>>();
 
-    return new QdrantCollection<Guid, IngestedChunk>(
-        client, 
-        appSettings.Qdrant.Collections.Chunks, 
-        ownsClient: false,
-        new QdrantCollectionOptions
-        {
-            EmbeddingGenerator = embGen
-        });
-});
+//    return new QdrantCollection<Guid, IngestedChunk>(
+//        client, 
+//        appSettings.Qdrant.Collections.Chunks, 
+//        ownsClient: false,
+//        new QdrantCollectionOptions
+//        {
+//            EmbeddingGenerator = embGen
+//        });
+//});
 
-builder.Services.AddSingleton<VectorStoreCollection<Guid, IngestedDocument>>(sp =>
-{
-    var client = sp.GetRequiredService<QdrantClient>();
-    var embGen = sp.GetRequiredService<IEmbeddingGenerator<string, Embedding<float>>>();
+//builder.Services.AddSingleton<VectorStoreCollection<Guid, IngestedDocument>>(sp =>
+//{
+//    var client = sp.GetRequiredService<QdrantClient>();
+//    var embGen = sp.GetRequiredService<IEmbeddingGenerator<string, Embedding<float>>>();
 
-    return new QdrantCollection<Guid, IngestedDocument>(
-        client, 
-        appSettings.Qdrant.Collections.Documents, 
-        ownsClient: false,
-        new QdrantCollectionOptions
-        {
-            EmbeddingGenerator = embGen
-        });
-});
+//    return new QdrantCollection<Guid, IngestedDocument>(
+//        client, 
+//        appSettings.Qdrant.Collections.Documents, 
+//        ownsClient: false,
+//        new QdrantCollectionOptions
+//        {
+//            EmbeddingGenerator = embGen
+//        });
+//});
 
 
 

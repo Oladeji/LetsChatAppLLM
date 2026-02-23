@@ -1,4 +1,5 @@
-﻿using LetsChatAppBackEnd.Hubs;
+﻿using LetsChatAppBackEnd.Configuration;
+using LetsChatAppBackEnd.Hubs;
 using LetsChatAppBackEnd.Models;
 using LetsChatAppBackEnd.Services;
 using LetsChatAppBackEnd.Services.Ingestion;
@@ -50,19 +51,22 @@ namespace LetsChatAppBackEnd
             return Results.Ok(new { Message = "Re-ingestion completed successfully" });
         }
 
-        public static async Task<IResult> GetDocs(VectorStoreCollection<Guid, IngestedDocument> documentsCollection)
+        public static async Task<IResult> GetDocs(VectorStore vectorStore, AppSettings appSettings)
         {
+            var documentsCollection = vectorStore.GetCollection<Guid, IngestedDocument>(
+                    appSettings.Qdrant.Collections.Documents);
             var documents = await documentsCollection.GetAsync(_ => true, top: int.MaxValue).ToListAsync();
             return Results.Ok(documents.Select(d => new DocumentInfo(d.DocumentId, d.SourceId, d.DocumentVersion)));
         }
 
         public static async Task<IResult> DeleteDocs(
-                Guid documentId,
-                VectorStoreCollection<Guid, IngestedDocument> documentsCollection,
-                VectorStoreCollection<Guid, IngestedChunk> chunksCollection)
-        { 
-          
-          //  var documents = await documentsCollection.GetAsync(d => d.DocumentId == documentId, top: int.MaxValue).ToListAsync();
+                Guid documentId, VectorStore vectorStore, AppSettings appSettings)
+        {
+
+
+            var documentsCollection = vectorStore.GetCollection<Guid, IngestedDocument>(appSettings.Qdrant.Collections.Documents);
+            var chunksCollection = vectorStore.GetCollection<Guid, IngestedDocument>(appSettings.Qdrant.Collections.Chunks);
+                    
             var documents = await documentsCollection.GetAsync(d => d.DocumentId.Equals(documentId), top: int.MaxValue).ToListAsync();
             if (documents.Count == 0)
             {
