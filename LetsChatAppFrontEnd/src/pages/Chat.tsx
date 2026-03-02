@@ -1,6 +1,7 @@
 import{ useEffect, useRef, useState } from 'react'
-import { Box, Button, CircularProgress, Typography, Alert } from '@mui/material'
+import { Box, Button, CircularProgress, Typography, Alert, Paper } from '@mui/material'
 import RefreshIcon from '@mui/icons-material/Refresh'
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome'
 import { useChat } from '../contexts/ChatContext'
 import { chatService } from '../services/chatService'
 import ChatMessageItem from '../components/ChatMessageItem'
@@ -112,39 +113,120 @@ const Chat = () => {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Typography variant="h4">Chat</Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Typography 
+          variant="h4" 
+          sx={{ 
+            fontWeight: 700,
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            backgroundClip: 'text',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+          }}
+        >
+          AI Chat
+        </Typography>
         <Button
           startIcon={<RefreshIcon />}
           onClick={handleReset}
           variant="outlined"
+          sx={{
+            borderRadius: 2,
+            px: 2.5,
+            borderWidth: 2,
+            '&:hover': {
+              borderWidth: 2,
+              transform: 'translateY(-2px)',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+            },
+            transition: 'all 0.3s ease',
+          }}
         >
           New Chat
         </Button>
       </Box>
 
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+        <Alert 
+          severity="error" 
+          sx={{ 
+            mb: 2,
+            borderRadius: 2,
+            border: '1px solid',
+            borderColor: 'error.light',
+          }} 
+          onClose={() => setError(null)}
+        >
           {error}
         </Alert>
       )}
 
-      <Box
+      <Paper
+        elevation={0}
         sx={{
           flex: 1,
           overflowY: 'auto',
           mb: 2,
-          p: 2,
+          p: 3,
           border: '1px solid',
           borderColor: 'divider',
-          borderRadius: 1,
+          borderRadius: 3,
+          bgcolor: 'background.default',
+          '&::-webkit-scrollbar': {
+            width: '8px',
+          },
+          '&::-webkit-scrollbar-track': {
+            bgcolor: 'transparent',
+          },
+          '&::-webkit-scrollbar-thumb': {
+            bgcolor: 'grey.300',
+            borderRadius: '4px',
+            '&:hover': {
+              bgcolor: 'grey.400',
+            },
+          },
         }}
       >
         {messages.length === 0 && !streamingMessage && (
-          <Box sx={{ textAlign: 'center', mt: 4 }}>
-            <Typography variant="h6" color="text.secondary">
-              Start a conversation by asking a question about your documents
-            </Typography>
+          <Box 
+            sx={{ 
+              textAlign: 'center', 
+              mt: 8,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 3,
+            }}
+          >
+            <Box
+              sx={{
+                width: 80,
+                height: 80,
+                borderRadius: '20px',
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 8px 24px rgba(102, 126, 234, 0.3)',
+              }}
+            >
+              <AutoAwesomeIcon sx={{ fontSize: 40, color: 'white' }} />
+            </Box>
+            <Box>
+              <Typography 
+                variant="h5" 
+                sx={{ 
+                  fontWeight: 600, 
+                  mb: 1,
+                  color: 'text.primary',
+                }}
+              >
+                Start a conversation
+              </Typography>
+              <Typography variant="body1" color="text.secondary">
+                Ask me anything about your documents
+              </Typography>
+            </Box>
           </Box>
         )}
 
@@ -168,13 +250,17 @@ const Chat = () => {
         )}
 
         {isLoading && !streamingMessage && (
-          <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
-            <CircularProgress />
+          <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
+            <CircularProgress 
+              sx={{
+                color: 'primary.main',
+              }}
+            />
           </Box>
         )}
 
         <Box ref={messagesEndRef} />
-      </Box>
+      </Paper>
 
       <ChatInput onSend={handleSendMessage} disabled={isLoading} />
     </Box>
